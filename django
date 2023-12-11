@@ -1,0 +1,74 @@
+#!/bin/bash
+
+# Check if Python 3 is installed
+if command -v python3 &>/dev/null; then
+    python_cmd="python3"
+elif command -v python &>/dev/null; then
+    python_cmd="python"
+else
+    echo "Python 3 or Python 2 is required but not found. Please install Python."
+    exit 1
+fi
+
+# Check if pip is installed
+if ! command -v pip &>/dev/null; then
+    echo "pip is required but not found. Please install pip."
+    exit 1
+fi
+
+# Check if virtualenv is installed
+if ! command -v virtualenv &>/dev/null; then
+    echo "virtualenv is required but not found. Installing virtualenv..."
+    if ! $python_cmd -m pip install virtualenv; then
+        echo "Failed to install virtualenv. Please install it manually."
+        exit 1
+    fi
+fi
+
+# Ask the user for the name of the virtual environment
+read -p "Enter the name of the virtual environment: " venv_name
+
+# Create virtual environment
+$python_cmd -m virtualenv $venv_name
+
+# Attempt to activate the virtual environment
+if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
+    if ! source $venv_name/Scripts/activate; then
+        echo "Failed to activate the virtual environment. Please activate it manually using 'source $venv_name/Scripts/activate'."
+        exit 1
+    fi
+else
+    if ! source $venv_name/bin/activate; then
+        echo "Failed to activate the virtual environment. Please activate it manually using 'source $venv_name/bin/activate'."
+        exit 1
+    fi
+fi
+
+# Inform the user that the environment is activated
+echo "Virtual environment '$venv_name' activated successfully."
+
+# Install requirements.txt
+pip install django
+
+#make a new project
+read -p "Enter name of new project: " project_name
+
+django-admin startproject $project_name
+
+cd $project_name
+
+# Run makemigrations
+python manage.py makemigrations
+
+# Run migrate
+python manage.py migrate
+
+#confirm what is installed in the venv
+pip list
+
+# Run manage.py (confirm in your browser)
+python manage.py runserver
+
+
+# read -p "Enter app name: " $app_name
+#
