@@ -38,9 +38,11 @@ if [[ "$OSTYPE" == "msys" || "$OSTYPE" == "cygwin" ]]; then
         exit 1
     fi
 else
-    if ! source $venv_name/bin/activate; then
-        echo "Failed to activate the virtual environment. Please activate it manually using 'source $venv_name/bin/activate'."
-        exit 1
+    if ! source $venv_name/lib/activate; then
+            if ! source $venv_name/bin/activate; then
+            echo "Failed to activate the virtual environment. Please activate it manually using 'source $venv_name/bin/activate' or 'source $venv_name/Lib/activate'."
+            exit 1
+            fi
     fi
 fi
 
@@ -58,17 +60,26 @@ django-admin startproject $project_name
 cd $project_name
 
 # Run makemigrations
-python manage.py makemigrations
+$python_cmd manage.py makemigrations
 
 # Run migrate
-python manage.py migrate
+$python_cmd manage.py migrate
 
 #confirm what is installed in the venv
 pip list
 
 # Run manage.py (confirm in your browser)
-python manage.py runserver
 
+SCRIPT_PATH="$(realpath "$0")"
 
+# Check and add the script to the bashrc file if not already present
+BASHRC_FILE="$HOME/.bashrc"
+if ! grep -qxF "source $SCRIPT_PATH" "$BASHRC_FILE"; then
+    echo -e "\n# Automatically activate Python environment and Django project" >> "$BASHRC_FILE"
+    echo "source $SCRIPT_PATH" >> "$BASHRC_FILE"
+    echo "Added script to $BASHRC_FILE for automatic activation."
+fi
+
+$python_cmd manage.py runserver
 # read -p "Enter app name: " $app_name
 #
